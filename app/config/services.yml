@@ -1,0 +1,37 @@
+# Learn more about services, parameters and containers at
+# http://symfony.com/doc/current/book/service_container.html
+
+services:
+
+    user.example_validator:                              # Le nom du service
+        # La classe du service, ici notre validateur déjà créé
+        class: AppBundle\Validator\ExampleValidator
+        # Les données qu'on injecte au service : liste requête, l'EntityManager, container
+        arguments:
+            - "@request_stack"
+            - "@doctrine.orm.entity_manager"
+            - "@security.token_storage"
+        tags:
+            # C'est avec l'alias qu'on retrouvera le service
+            - { name: validator.constraint_validator, alias: example_valid }
+
+    serializer.mapping.cache.apcu:
+        class: Doctrine\Common\Cache\ApcuCache
+
+    # Gestion des favoris lors de la connexion
+    app.login_service:
+        class:        AppBundle\EventListener\LoginListener
+        arguments:    ["@doctrine.orm.entity_manager", "@session"]
+        tags:
+            - { name: kernel.event_listener, event: security.interactive_login, method: onInteractiveLogin }
+
+    app.security.login_form_authenticator:
+        class: AppBundle\Security\LoginFormAuthenticator
+        autowire: true
+
+    fos_user.registration:
+        class: AppBundle\EventListener\RegistrationListener
+        arguments: ['@doctrine.orm.entity_manager', '@session']
+        autowire: true
+        tags:
+            - { name: kernel.event_subscriber }

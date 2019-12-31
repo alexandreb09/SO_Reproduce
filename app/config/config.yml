@@ -1,0 +1,120 @@
+imports:
+    - { resource: parameters.yml }
+    - { resource: security.yml }
+    - { resource: services.yml }
+    - { resource: admin.yml }
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+
+framework:
+    #esi: ~
+    secret: '%secret%'
+    router:
+        resource: '%kernel.project_dir%/app/config/routing.yml'
+        strict_requirements: ~
+    form: ~
+    csrf_protection: ~
+    validation: { enable_annotations: true }
+    #serializer: { enable_annotations: true }
+    templating:
+        engines: ['twig']
+    trusted_hosts: ~
+    session:
+        # https://symfony.com/doc/current/reference/configuration/framework.html#handler-id
+        handler_id: session.handler.native_file
+        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+        # enables the support of sessions in the app
+        enabled: true
+    fragments: ~
+    http_method_override: true
+    assets: ~
+    php_errors:
+        log: true
+    default_locale: '%locale%'
+
+    translator:
+        fallbacks: [fr]
+
+# Twig Configuration
+twig:
+    debug: '%kernel.debug%'
+    strict_variables: '%kernel.debug%'
+
+
+# Doctrine Configuration
+doctrine:
+    dbal:
+        driver: pdo_mysql
+        host: '%database_host%'
+        port: '%database_port%'
+        dbname: '%database_name%'
+        user: '%database_user%'
+        password: '%database_password%'
+        charset: UTF8
+        # if using pdo_sqlite as your database driver:
+        #   1. add the path in parameters.yml
+        #     e.g. database_path: '%kernel.project_dir%/var/data/data.sqlite'
+        #   2. Uncomment database_path in parameters.yml.dist
+        #   3. Uncomment next line:
+        #path: '%database_path%'
+
+    orm:
+        auto_generate_proxy_classes: '%kernel.debug%'
+        naming_strategy: doctrine.orm.naming_strategy.underscore
+        auto_mapping: true
+
+        # Gestionnaire de taches de fond
+        mappings:
+            AppBundle: ~
+
+
+sonata_block:
+    default_contexts: [cms]
+    blocks:
+        # Enable the SonataAdminBundle block
+        sonata.admin.block.admin_list:
+            contexts:   [admin]
+        sonata.admin.block.search_result:
+            contexts: [admin]
+        # Your other blocks
+
+fos_user:
+    db_driver:      orm                                 # other valid values are 'mongodb', 'couchdb' and 'propel'
+    firewall_name:  main
+    user_class:     AppBundle\Entity\User
+    service:
+        mailer:     fos_user.mailer.default             # Service de mail utilisé
+    from_email:
+        address:        noreply@test.com
+        sender_name:    Name
+
+sensio_framework_extra:
+    request:
+        converters: true
+        auto_convert: false
+
+jms_di_extra:
+    locations:
+        all_bundles: false
+        bundles: [ModulesCoreBundle, ModulesSurveyBundle]
+        directories: ["%kernel.root_dir%/../src"]
+
+jms_serializer:
+    enable_short_alias: false
+
+# Lexik Paybox Bundle
+lexik_paybox:
+    parameters:
+        #        production: tpe        # Switches between Paybox test and production servers (preprod-tpe <> tpe)
+        # Site number provided by the bank
+        site:  '1234567890'
+        # Rank number provided by the bank
+        rank:  '1234567890'
+        # Customer's login provided by Paybox
+        login: '1234567890'
+        hmac:
+            # Key used to compute the hmac hash, provided by Paybox
+            key:            '12345678912345678912345789'
+            algorithm:      sha512 # signature algorithm
+            signature_name: Sign   # customize the signature parameter name

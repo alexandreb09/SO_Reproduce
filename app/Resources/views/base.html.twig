@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <link rel="icon" type="image/x-icon" href="{{ asset('logo.png') }}">
+
+        <title>{% block title %}Demo{% endblock %}</title>
+
+        {% block stylesheet %}
+        {% endblock %}
+        <!-- Bootstrap select -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.min.css">
+
+        <!-- Bootstrap -->
+        <link rel="stylesheet" crossorigin="anonymous"
+              href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+              integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+        >
+
+        {% block stylesheet_custom %}
+        {% endblock %}
+    </head>
+
+<body>
+
+
+    {% set connected = is_granted("ROLE_USER") %}
+
+    {% if active is not defined %}
+        {% set active = "" %}
+    {% endif %}
+
+    {% block fos_user_content %}
+        {% block body %}
+            <div class="container-fluid">
+                {% block navbar %}
+                    {% include '@Carte/Carte/navbar.html.twig' %}
+                {% endblock %}
+
+                <div class="row">
+                    {% block sidebar %}
+                        {%  include '@Carte/Carte/sidebar.html.twig' with {'active': active } %}
+                    {% endblock %}
+
+                    <main role="main" class="col-md-10 jumbotron">
+                        {% for type in ['error', 'warning', 'success'] %}
+                            {% for message in app.flashes(type) %}
+
+                                <div class="alert alert-{% if type == 'error' %}danger{% else %}{{ type }}{% endif %} flag-message" role="alert">
+                                    <button type="button" class="close float-right" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+
+                        {% block main %}
+                            <h1 class="display-4">
+                                {% block main_title %}{% endblock %}
+                            </h1>
+                            <hr class="my-4">
+                            {% block main_contenu %}{% endblock %}
+                        {% endblock %}
+                    </main>
+                </div>
+            </div>
+
+            {% block extra %}
+            {% endblock %}
+
+        {% endblock %}
+    {% endblock fos_user_content %}
+
+    <!-- JAVASCRIPT -->
+
+    <!-- Jquery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>
+
+    {% block javascripts %}
+    {% endblock %}
+
+
+
+    <!-- JS NavBar -->
+    <script>
+        function deconnexion () {
+            Swal.fire({
+                title: 'Attention!',
+                html: "Voulez-vous vraiment vous déconnecter ?",
+                type: 'warning',
+                confirmButtonText: 'Oui',
+                cancelButtonText: "Annuler",
+                showCancelButton: true,
+            }).then((result) => {
+                if (result.value) {
+                    location.href = "{{ path("fos_user_security_logout") }}";
+                }
+            })
+        }
+        /* Suppremier "formulaire envoi" lors rechargement page */
+        if ( window.history.replaceState ) {
+            window.history.replaceState( null, null, window.location.href );
+        }
+        /* Charger icônes */
+        feather.replace();
+        /* Redimensionner input options */
+        $("#btn-options").on('click', function(){
+            $(".width25").each(function(){
+                $(this).width("");
+            })
+        });
+    </script>
+
+    <!-- Bootstrap -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+
+    <!-- Bootstrap select -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+    <!-- (Optional) Latest compiled and minified JavaScript translation files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.9/js/i18n/defaults-fr_FR.min.js"></script>
+
+    <script>
+        let div_recherche_poste = $('#input_postes_recherche');
+        let div_recherche_ville = $('#input_villes_recherche');
+        let div_recherche_plan_eau = $('#input_plan_eau_recherche');
+
+        function initPosteVille(){
+            {% if criteres is defined %}
+                div_recherche_plan_eau.val({{ criteres.plan_eau|json_encode|raw }});
+                div_recherche_poste.val({{ criteres.postes|json_encode|raw }});
+                div_recherche_ville.val({{ criteres.villes|json_encode|raw }});
+
+                div_recherche_plan_eau.selectpicker('refresh');
+                div_recherche_poste.selectpicker('refresh');
+                div_recherche_ville.selectpicker('refresh');
+
+                {% if criteres.date %}
+                    $('#input-date-debut').val("{{ criteres.date|date("d/m/Y") }}");
+                {% endif %}
+
+                let b = {% if criteres.statut == 1 %}true{% else %}false{% endif %};
+                $("#input-statut-libre").prop("checked", b);
+                $("#input-statut-tous").prop("checked", !b);
+
+                b = {% if criteres.recherche == 0 %}true{% else %}false{% endif %};
+                $('#input-recherche-poste').prop("checked", b);
+                $('#input-recherche-plan-eau').prop("checked", !b);
+            {% endif %}
+        }
+
+        function updatePosteVille() {
+            let plans_eau_ids = div_recherche_plan_eau.val();
+
+            let new_options_poste = '', new_options_ville = '', poste, ville;
+
+            for (i = 0; i < liste_postes_recherche.length; i++) {
+                poste = liste_postes_recherche[i];
+                if (plans_eau_ids.length > 0) {
+                    for (j = 0; j < plans_eau_ids.length; j++) {
+                        let plans_eau_id = plans_eau_ids[j];
+                        if (Number(plans_eau_id) === Number(poste[1])) {
+                            new_options_poste += '<option value="' + poste[0] + '">' + poste[2] + '</option>';
+                        }
+                    }
+                }else {
+                    new_options_poste += '<option value="' + poste[0] + '">' + poste[2] + '</option>';
+                }
+            }
+
+            for (i = 0; i < liste_villes_recherche.length; i++) {
+                ville = liste_villes_recherche[i];
+                if (plans_eau_ids.length > 0){
+                    for (j = 0; j < plans_eau_ids.length; j++){
+                        let plan_eau = liste_plan_eau[plans_eau_ids[j]];
+
+                        if (ville['cp'] === plan_eau['cp'] && ville['ville'] === plan_eau['ville']) {
+                            new_options_ville += '<option value="' + ville['ville'] + '¤' + ville['cp'] +
+                                '" data-subtext="' + ville['cp'] + '">' + ville['ville'] + '</option>';
+                        }
+                    }
+                }else{
+                    new_options_ville += '<option value="' + ville['ville'] + '¤' + ville['cp'] +
+                        '" data-subtext="' + ville['cp'] + '">' + ville['ville'] + '</option>';
+                }
+            }
+            div_recherche_poste.html(new_options_poste);
+            div_recherche_poste.selectpicker('refresh');
+            div_recherche_ville.html(new_options_ville);
+            div_recherche_ville.selectpicker('refresh');
+        }
+
+        let liste_plan_eau = {
+            {% for plan_eau in plans_eau_recherche %}
+            {{ plan_eau.id }} : {
+                nom:"{{ plan_eau.nom }}",
+                ville:"{{ plan_eau.geoloc.ville }}",
+                cp:"{{ plan_eau.geoloc.codePostal }}"
+            },
+            {% endfor %}
+        };
+        console.log(liste_plan_eau);
+        let liste_postes_recherche = [
+            {% for poste in postes_recherche %}
+                [{{ poste.id }}, {{ poste.planEau.id }}, "{{ poste.nom }}"],
+            {% endfor %}
+        ];
+        let liste_villes_recherche = [
+            {% for ville in villes_recherche %}
+            {
+                ville: "{{ ville.ville }}",
+                cp: "{{ ville.codePostal }}"
+            },
+            {% endfor %}
+        ];
+
+        $('#form-recherche').submit( function(event) {
+            if( $( '#input-statut-libre' ).is( ":checked" ) && $('#input-date-debut').val() === ""){
+                event.preventDefault();
+                Swal.fire(
+                    'Oups',
+                    'Veuillez sélectionner un date afin de rechercher les postes libres uniquement.',
+                    'warning'
+                )
+            }
+        });
+
+        $(document).ready(function () {
+            initPosteVille();
+            updatePosteVille();
+            initPosteVille();
+            div_recherche_plan_eau.on("changed.bs.select", updatePosteVille);
+        });
+    </script>
+</body>
+</html>

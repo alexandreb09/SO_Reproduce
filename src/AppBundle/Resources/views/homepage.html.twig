@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" type="image/x-icon" href="{{ asset('logo.png') }}">
+
+    <title>{% block title %}Demo{% endblock %}</title>
+
+    {% block stylesheet %}
+    {% endblock %}
+    <!-- Bootstrap -->
+    <link rel="stylesheet" crossorigin="anonymous"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+    >
+
+    {% block stylesheet_custom %}
+    {% endblock %}
+</head>
+
+<body>
+
+
+{% set connected = is_granted("ROLE_USER") %}
+
+{% if active is not defined %}
+    {% set active = "" %}
+{% endif %}
+
+{% block fos_user_content %}
+    {% block body %}
+        <div class="container-fluid">
+
+            <main role="main" class="jumbotron">
+                {% for type in ['error', 'warning', 'success'] %}
+                    {% for message in app.flashes(type) %}
+
+                        <div class="alert alert-{% if type == 'error' %}danger{% else %}{{ type }}{% endif %} flag-message" role="alert">
+                            <button type="button" class="close float-right" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+
+                {% block main %}
+                    <h1 class="display-4">
+                        {% block main_title %}Demo App{% endblock %}
+                    </h1>
+                    <hr class="my-4">
+                    {% block main_contenu %}Content{% endblock %}
+                {% endblock %}
+            </main>
+        </div>
+
+    {% endblock %}
+{% endblock fos_user_content %}
+
+<!-- JAVASCRIPT -->
+
+<!-- Jquery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Icons -->
+<script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+
+{% block javascripts %}
+{% endblock %}
+
+<!-- Bootstrap -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+</html>
